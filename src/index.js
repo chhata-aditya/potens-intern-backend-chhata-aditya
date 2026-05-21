@@ -24,7 +24,8 @@ async function startApp() {
       version: "1.0.0",
       author: "Chhata Aditya",
       endpoints: {
-        "POST /recommend": "Get top 3 job matches for a student profile",
+        "POST /recommend": "Get top 3 job matches for a student profile (cached, 5min TTL)",
+        "GET /cache-stats": "See how many profiles are currently cached",
         "GET /explain/:item_id": "Eligibility logic for a job (public)",
         "GET /items": "List all jobs (admin: x-admin-key header)",
         "POST /items": "Create a job (admin)",
@@ -36,6 +37,12 @@ async function startApp() {
 
   // Recommend
   app.use("/recommend", makeRecommendRouter(db));
+
+  // Cache stats — lets you see how many profiles are cached and the TTL
+  app.get("/cache-stats", (req, res) => {
+    const cache = require("./cache");
+    res.json(cache.stats());
+  });
 
   // Explain (public)
   app.get("/explain/:item_id", (req, res) => {
