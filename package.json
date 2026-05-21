@@ -1,0 +1,22 @@
+{
+  "name": "potens-intern-backend-chhata-aditya",
+  "version": "1.0.0",
+  "description": "Job Recommendation API for students - Potens Internship 2026",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed": "node scripts/seed.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.22.2",
+    "sql.js": "^1.14.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^6.3.4"
+  }
+}
