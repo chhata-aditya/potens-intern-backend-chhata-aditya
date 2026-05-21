@@ -155,3 +155,35 @@ describe("GET /items", () => {
     expect(res.status).toBe(401);
   });
 });
+
+// -------------------------------------------------------
+// Skill momentum bonus
+// -------------------------------------------------------
+describe("Skill momentum bonus", () => {
+  test("student with >60% skill match scores higher than one with <60%", async () => {
+    // High coverage: knows Node.js and SQL (2/2 = 100% for Backend Intern)
+    const highCoverage = await request(app).post("/recommend").send({
+      name: "High Coverage",
+      cgpa: 7.5,
+      degree: "Any",
+      skills: ["Node.js", "SQL"],
+      experience_level: "fresher",
+      preferred_domain: "backend",
+    });
+
+    // Low coverage: only knows one obscure skill (0% match for most jobs)
+    const lowCoverage = await request(app).post("/recommend").send({
+      name: "Low Coverage",
+      cgpa: 7.5,
+      degree: "Any",
+      skills: ["Fortran"],
+      experience_level: "fresher",
+      preferred_domain: "backend",
+    });
+
+    const highScore = highCoverage.body.recommendations?.[0]?.match_score ?? 0;
+    const lowScore = lowCoverage.body.recommendations?.[0]?.match_score ?? 0;
+
+    expect(highScore).toBeGreaterThan(lowScore);
+  });
+});

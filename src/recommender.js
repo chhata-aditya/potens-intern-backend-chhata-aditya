@@ -70,6 +70,16 @@ function scoreJob(job, profile) {
   }
 
   const skillCoverage = Math.round((matchedSkills.length / jobSkills.length) * 100);
+
+  // Skill momentum bonus: +15 if student covers more than 60% of required skills.
+  // Reasoning: a candidate who's 75% there is meaningfully more hirable than one
+  // who's 25% there -- the remaining gap is small enough that onboarding covers it.
+  // A flat per-skill score doesn't capture this threshold effect, so we model it explicitly.
+  if (skillCoverage > 60 && jobSkills.length > 1) {
+    score += 15;
+    reasons.push(`You cover over 60% of the required skills -- the gap is small enough to close on the job.`);
+  }
+
   const allReasons = [...reasons, ...mismatches];
 
   const reasoning =
