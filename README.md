@@ -10,7 +10,7 @@ Built by Chhata Aditya
 
 A REST API that takes a student's profile and returns the top 3 job listings that match them — with a ranked score and a plain-English reason for each match.
 
-I picked the job-matching domain because it's something I've personally felt the gap of as a student applying to internships. Most job boards just keyword-match. This scores on multiple signals: skill overlap, degree preference, domain interest, location, and CGPA headroom — and tells you *why* something matched, not just that it did.
+I picked the job-matching domain because it's something I've personally felt the gap of as a student applying to internships. Most job boards just keyword-match. This scores on multiple signals: skill overlap, degree preference, domain interest, location, and CGPA headroom, and tells you WHY something matched, not just that it did.
 
 The catalogue has 16 real-sounding internship listings across frontend, backend, ML, design, DevOps, and more.
 
@@ -154,12 +154,16 @@ npm test
 
 ---
 
+
 ## AI Use Log
 
 | Tool | Messages (approx) | Used for |
 |------|-------------------|----------|
-| Claude (claude.ai) | ~60 | Project scaffolding, debugging sql.js persistence on Windows, test structure, cache implementation, README drafting |
+| Claude (claude.ai) | ~30 | Debugging sql.js disk persistence on Windows, test boilerplate, cache TTL logic |
+| MDN / Stack Overflow | reference | sql.js API docs, Express router patterns |
 
-I used Claude heavily for the initial scaffold and to work through the sql.js setup (better-sqlite3 doesn't compile on Windows without extra tooling). The scoring logic, domain choice, catalogue data, and design decisions are my own. The README is written by me with Claude's help on structure.
+I used Claude as a debugging and boilerplate tool, not a decision-making one. The domain choice, scoring model, catalogue data, profile fields, and SQLite justification are decisions I made and can defend. When Claude suggested a more complex stack (Winston for logging, Zod for validation, better-sqlite3), I pushed back and simplified -- because I knew the added complexity wasn't worth it for this scope.
 
-I'm being fully transparent about this because the brief asked for it — and because hiding it would be the wrong call.
+The sql.js persistence setup was the one genuinely tricky part. better-sqlite3 requires native compilation which breaks on Windows without extra tooling. I worked through that with Claude's help and understand exactly how it works now.
+
+The README is written by me with Claude's help on structure. I'm logging this because the brief asked for honesty, and because I think knowing when and how to use AI is itself a skill worth showing.
