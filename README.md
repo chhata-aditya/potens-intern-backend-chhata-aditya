@@ -103,14 +103,15 @@ Every job goes through two stages:
 
 **Soft scoring (builds the rank):**
 
-| Signal | Points |
-|--------|--------|
-| Each matched skill | +10 |
-| Domain preference match | +20 |
-| Exact degree match | +15 |
-| Degree open to "Any" | +5 |
-| Location match or remote | +10 |
-| CGPA 1.5+ above minimum | +10 |
+| Signal | Points | Reasoning |
+|--------|--------|-----------|
+| Each matched skill | +10 | Direct requirement coverage |
+| Skill momentum bonus | +15 | Triggered when >60% of skills match. A candidate 75% there is meaningfully more hirable than one 25% there -- the gap is closeable on the job. Flat per-skill scoring misses this. |
+| Domain preference match | +20 | Student is more likely to stay and perform in a domain they want |
+| Exact degree match | +15 | Explicit preference signal from employer |
+| Degree open to "Any" | +5 | Acknowledged but weighted lower |
+| Location match or remote | +10 | Reduces friction in the hiring process |
+| CGPA 1.5+ above minimum | +10 | Headroom signals academic consistency, not just clearing the bar |
 
 The top 3 by score are returned. Ties are broken by order in the catalogue.
 
@@ -159,7 +160,7 @@ npm test
 
 | Tool | Messages (approx) | Used for |
 |------|-------------------|----------|
-| Claude (claude.ai) | ~30 | Debugging sql.js disk persistence on Windows, test boilerplate, cache TTL logic |
+| Claude (claude.ai) | ~35 | Debugging sql.js disk persistence on Windows, test boilerplate, cache TTL logic |
 | MDN / Stack Overflow | reference | sql.js API docs, Express router patterns |
 
 I used Claude as a debugging and boilerplate tool, not a decision-making one. The domain choice, scoring model, catalogue data, profile fields, and SQLite justification are decisions I made and can defend. When Claude suggested a more complex stack (Winston for logging, Zod for validation, better-sqlite3), I pushed back and simplified -- because I knew the added complexity wasn't worth it for this scope.
