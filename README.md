@@ -28,6 +28,18 @@ I chose SQLite over PostgreSQL deliberately. For a catalogue-based system with i
 
 ## Setup
 
+Requirements: Node.js 18 or higher. Nothing else.
+
+Check your Node version first:
+
+```bash
+node -v
+```
+
+If you don't have Node, download the LTS installer from nodejs.org and run it.
+
+Then:
+
 ```bash
 git clone https://github.com/chhata-aditya/potens-intern-backend-chhata-aditya
 cd potens-intern-backend-chhata-aditya
@@ -36,8 +48,16 @@ node scripts/seed.js
 npm start
 ```
 
+The `--ignore-scripts` flag skips native compilation steps that fail on some machines. Everything this project needs is pure JavaScript so nothing is lost.
+
 Server runs at `http://localhost:3000`  
 Admin key: `potens-admin-2026`
+
+To run tests (stop the server first with Ctrl+C):
+
+```bash
+npm test
+```
 
 ---
 
@@ -66,30 +86,63 @@ Response includes a `cache` field — `"MISS"` on first call, `"HIT"` on repeat 
 ---
 
 ### `GET /explain/:item_id`
-Returns the eligibility logic for a job in plain English. No auth.
 
-```bash
-GET /explain/2
+Returns the eligibility logic for a specific job in plain English. No auth required.
+
+```
+GET http://localhost:3000/explain/2
 ```
 
 ---
 
 ### `GET /cache-stats`
-Shows how many profiles are currently cached and the TTL. No auth.
+
+Shows how many profiles are currently cached and the TTL. No auth required.
+
+```
+GET http://localhost:3000/cache-stats
+```
 
 ---
 
-### `GET /items` — Admin
-Returns all 16 job listings. Requires header: `x-admin-key: potens-admin-2026`
+### `GET /items` -- Admin only
 
-### `POST /items` — Admin
-Add a new job to the catalogue.
+Returns all job listings. Requires the header `x-admin-key: potens-admin-2026`.
 
-### `PUT /items/:id` — Admin
+In Postman: Headers tab, add key `x-admin-key`, value `potens-admin-2026`.
+
+---
+
+### `POST /items` -- Admin only
+
+Add a new job to the catalogue. Same header required.
+
+Example body:
+
+```json
+{
+  "title": "iOS Developer Intern",
+  "company": "Paytm",
+  "domain": "mobile",
+  "min_cgpa": 7.0,
+  "required_skills": ["Swift", "Xcode", "REST APIs"],
+  "preferred_degree": "Any",
+  "experience_level": "fresher",
+  "location": "Noida",
+  "stipend_min": 20000,
+  "stipend_max": 28000,
+  "description": "Build iOS features for Paytm's super app.",
+  "eligibility_logic": "Swift required. CGPA 7.0+. Any degree."
+}
+```
+
+### `PUT /items/:id` -- Admin only
+
 Update any field on an existing job.
 
-### `DELETE /items/:id` — Admin
-Remove a job.
+### `DELETE /items/:id` -- Admin only
+
+Remove a job from the catalogue.
 
 ---
 
@@ -97,25 +150,25 @@ Remove a job.
 
 Every job goes through two stages:
 
-**Hard filters (disqualify entirely):**
-- Student's CGPA is below the job's minimum
-- Experience gap is more than 1 level (e.g. job needs 1–2yr, student is a fresher — disqualified. But fresher applying to a 0–1yr role is fine.)
+**Hard filters -- disqualify entirely if:**
+- Student CGPA is below the job's minimum
+- Experience gap is more than 1 level (job needs 1-2yr, student is fresher = disqualified. Fresher applying to 0-1yr = fine, gap of 1 is allowed.)
 
-**Soft scoring (builds the rank):**
+**Soft scoring -- builds the rank:**
 
-| Signal | Points | Reasoning |
-|--------|--------|-----------|
+| Signal | Points | Why |
+|--------|--------|-----|
 | Each matched skill | +10 | Direct requirement coverage |
-| Skill momentum bonus | +15 | Triggered when >60% of skills match. A candidate 75% there is meaningfully more hirable than one 25% there -- the gap is closeable on the job. Flat per-skill scoring misses this. |
-| Domain preference match | +20 | Student is more likely to stay and perform in a domain they want |
-| Exact degree match | +15 | Explicit preference signal from employer |
+| Skill momentum bonus | +15 | Triggered when >60% of skills match. A candidate 75% there is more hirable than one 25% there -- the gap is closeable on the job. Flat per-skill scoring misses this threshold effect. |
+| Domain preference match | +20 | Student is more likely to stay and grow in a domain they chose |
+| Exact degree match | +15 | Explicit preference signal from the employer |
 | Degree open to "Any" | +5 | Acknowledged but weighted lower |
 | Location match or remote | +10 | Reduces friction in the hiring process |
-| CGPA 1.5+ above minimum | +10 | Headroom signals academic consistency, not just clearing the bar |
+| CGPA 1.5+ above minimum | +10 | Headroom signals consistency, not just clearing the bar |
 
-The top 3 by score are returned. Ties are broken by order in the catalogue.
+Top 3 by score are returned. Ties broken by catalogue order.
 
-Skill matching is fuzzy — `"SQL"` matches `"MySQL"` because the comparison checks if either string contains the other. This is intentional; a student who knows SQL can pick up MySQL syntax quickly.
+Skill matching is fuzzy -- `"SQL"` matches `"MySQL"` because the comparison checks if either string contains the other. A student who knows SQL can pick up MySQL syntax quickly; disqualifying them for the label difference would be wrong.
 
 ---
 
@@ -123,11 +176,11 @@ Skill matching is fuzzy — `"SQL"` matches `"MySQL"` because the comparison che
 
 `POST /recommend` has an in-memory cache with a 5-minute TTL.
 
-The cache key is built from the profile's scoring-relevant fields (cgpa, degree, skills, experience_level, preferred_domain, location) — normalized and sorted so `["Node.js", "SQL"]` and `["SQL", "Node.js"]` hit the same key.
+The cache key is built from scoring-relevant fields only: `cgpa`, `degree`, `skills`, `experience_level`, `preferred_domain`, `location` -- normalized and sorted so `["Node.js", "SQL"]` and `["SQL", "Node.js"]` hit the same key.
 
-The `name` field is intentionally excluded from the cache key. Two students with identical profiles should get identical results — their names don't affect matching.
+`name` is intentionally excluded. Two students with identical profiles should get identical results -- their names don't affect matching.
 
-Hit `GET /cache-stats` to see the current cache state.
+Check `GET /cache-stats` to see the live cache state.
 
 ---
 
@@ -137,21 +190,23 @@ Hit `GET /cache-stats` to see the current cache state.
 npm test
 ```
 
-12 tests across 3 groups:
-- `POST /recommend` — valid profile, no-match, missing fields, invalid cgpa, empty skills, experience gap logic
-- `GET /explain/:item_id` — valid and 404
-- `GET /items` — auth pass, no key, wrong key
+13 tests across 4 groups:
+
+- `POST /recommend` -- valid profile, no-match, missing fields, invalid CGPA, empty skills, experience gap logic
+- `GET /explain/:item_id` -- valid response and 404
+- `GET /items` -- auth pass, missing key, wrong key
+- Skill momentum bonus -- high coverage student scores higher than low coverage student
 
 ---
 
 ## What's missing / what I'd build next
 
-- **Pagination on `GET /items`** — fine at 16 jobs, needed at scale
-- **Rate limiting on `POST /recommend`** — `express-rate-limit` would be a 10-line addition
-- **dotenv for config** — admin key and port are hardcoded; would externalize these
-- **Persistent cache** — in-memory cache resets on server restart. Redis would fix this
-- **`/subscribe` webhook** — notify a profile when a new job matches them. I'd store profiles in a `subscribers` table and run a match check on every `POST /items`
-- **OpenAPI spec** — would auto-generate from routes using `swagger-autogen`
+- **Rate limiting on `POST /recommend`** -- `express-rate-limit` is a 10-line addition, just didn't prioritise it in 24 hours
+- **Pagination on `GET /items`** -- fine at 16 jobs, needed past a few hundred
+- **dotenv for config** -- admin key and port are hardcoded; would move to environment variables
+- **Persistent cache** -- in-memory resets on server restart. Redis would be the upgrade path for multi-instance deployments
+- **`/subscribe` webhook** -- store profiles in a `subscribers` table, run a match check on every `POST /items`, notify matches. This is the feature that would make it genuinely useful beyond a demo.
+- **OpenAPI spec** -- would auto-generate from routes using `swagger-autogen`
 
 ---
 
@@ -160,7 +215,7 @@ npm test
 
 | Tool | Messages (approx) | Used for |
 |------|-------------------|----------|
-| Claude (claude.ai) | ~35 | Debugging sql.js disk persistence on Windows, test boilerplate, cache TTL logic |
+| Claude (claude.ai) | ~35  | Debugging sql.js disk persistence on Windows, test boilerplate, cache TTL logic |
 | MDN / Stack Overflow | reference | sql.js API docs, Express router patterns |
 
 I used Claude as a debugging and boilerplate tool, not a decision-making one. The domain choice, scoring model, catalogue data, profile fields, and SQLite justification are decisions I made and can defend. When Claude suggested a more complex stack (Winston for logging, Zod for validation, better-sqlite3), I pushed back and simplified -- because I knew the added complexity wasn't worth it for this scope.
